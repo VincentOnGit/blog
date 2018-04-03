@@ -11,18 +11,7 @@ class User(object):
 		self.face = face
 
 	def getAttrsRepr(self):
-		keys = self.__dict__.keys()
-		res = "("
-		ph = "("
-		for i, key in enumerate(keys):
-			res += key
-			ph += '?'
-			if i < len(keys) - 1:
-				res += ', '
-				ph += ', '
-		res += ')'
-		ph += ')'
-		return res, ph
+		return '(name, pwd, email, age, birthday, face)', '(?, ?, ?, ?, ?, ?)'
 
 	def getAttrCnt(self):
 		return len(self.__dict__.keys())

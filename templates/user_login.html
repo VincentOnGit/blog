@@ -1,6 +1,9 @@
 {% extends "layout.html" %}
 
 {% block content %}
+    {% for message in get_flashed_messages(category_filter=['error']) %}
+        <h3 style="color: red">{{ message }}</h3>
+    {% endfor %}
     {% for message in get_flashed_messages(category_filter=['ok']) %}
         <h3 style="color: green">{{ message }}</h3>
     {% endfor %}

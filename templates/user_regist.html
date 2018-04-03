@@ -4,6 +4,9 @@
     {% for message in get_flashed_messages(category_filter=['error']) %}
         <h3 style="color: red">{{ message }}</h3>
     {% endfor %}
+    {% for message in get_flashed_messages(category_filter=['ok']) %}
+        <h3 style="color: green">{{ message }}</h3>
+    {% endfor %}
 
     <form method="post" class="col-md-6 col-md-offset-2">
         <div class="form-group">

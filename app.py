@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import sqlite3
-from flask import Flask, render_template, request, redirect, url_for, g, flash, get_flashed_messages
+from flask import Flask, render_template, request, redirect, url_for, g, flash, session, make_response
 from model import User
 
 app = Flask(__name__)
 app.config["DATABASE"] = 'database.db'
-app.config["SECRET_KEY"] = '123qweasdzxc'
+app.config["SECRET_KEY"] = '\xa2\xda\x01\xdb\xa7\x03\xeb\x9c-\xaec\xca\xea\xd1\xa7\x14\xe1\xd34\xd9\xa8\xcf\x99'
 
 
 def connect_db():
@@ -101,12 +101,28 @@ def show_all_rows():
 
 @app.route('/')
 def index():
-	return render_template('index.html')
+	print session
+	resp = make_response(render_template('index.html'))
+	resp.set_cookie('aaa', 'bbb')
+	return resp
 
 
 @app.route('/login/', methods=['GET', 'POST'])
 def user_login():
-	show_all_rows()
+	if request.method == 'POST':
+		username = request.form['user_name']
+		pwd = request.form['user_pwd']
+		user_x = query_user_by_name(username)
+		if not user_x:
+			flash(u"用户不存在，登录失败", category='error')
+			return render_template('user_login.html')
+		else:
+			if str(pwd) != str(user_x.pwd):
+				flash(u"密码错误！", category="error")
+				return render_template('user_login.html')
+			else:
+				session["user_name"] = user_x.name
+				return render_template('index.html')
 	return render_template('user_login.html')
 
 
@@ -128,6 +144,12 @@ def user_regist():
 		flash(u"注册成功", category='ok')
 		return redirect(url_for("user_login", username=user.name))
 	return render_template('user_regist.html')
+
+
+@app.route('/logout')
+def logout():
+	session.pop('user_name', None)
+	return redirect(url_for('index'))
 
 
 if __name__ == '__main__':
