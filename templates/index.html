@@ -7,3 +7,13 @@
             It includes the responsive CSS and HTML, so it also adapts to your viewport and device.</p>
     </div>
 {% endblock %}
+
+{% block js_code %}
+    <script>
+        $(document).ready(
+            function () {
+                $("#nav-1").addClass("active")
+            }
+        );
+    </script>
+{% endblock %}

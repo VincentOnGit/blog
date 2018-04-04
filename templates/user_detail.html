@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <div class="jumbotron" style="padding: 5px 20px">
+        <h2>{{ session.get("user_name") }}的个人中心</h2>
+    </div>
+    <div>
+        {% include "user_menu.html" %}
+        <div class="col-md-9">
+            <div class="jumbotron" style="padding: 5px 20px">
+                <h2>个人信息</h2>
+                <p>abc</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js_code %}
+    <script>
+        $(document).ready(
+            function () {
+                $("#nav-2").addClass("active")
+            }
+        );
+    </script>
+{% endblock %}

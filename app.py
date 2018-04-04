@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import sqlite3
+from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, g, flash, session, make_response
 from model import User
 
@@ -99,11 +100,19 @@ def show_all_rows():
 		print user.toList()
 
 
+def user_login_req(func):
+	@wraps(func)
+	def decorated_function(*args, **kwargs):
+		if "user_name" not in session:
+			return redirect(url_for("user_login", next=request.url))
+		return func(*args, **kwargs)
+
+	return decorated_function
+
+
 @app.route('/')
 def index():
-	print session
 	resp = make_response(render_template('index.html'))
-	resp.set_cookie('aaa', 'bbb')
 	return resp
 
 
@@ -122,7 +131,7 @@ def user_login():
 				return render_template('user_login.html')
 			else:
 				session["user_name"] = user_x.name
-				return render_template('index.html')
+				return redirect(url_for("index"))
 	return render_template('user_login.html')
 
 
@@ -146,10 +155,46 @@ def user_regist():
 	return render_template('user_regist.html')
 
 
+@app.route('/center/')
+@user_login_req
+def user_center():
+	return render_template("user_center.html")
+
+
+@app.route('/detail/')
+@user_login_req
+def user_detail():
+	return render_template("user_detail.html")
+
+
+@app.route('/pwd/')
+@user_login_req
+def user_pwd():
+	return render_template("user_pwd.html")
+
+
+@app.route('/info/')
+@user_login_req
+def user_info():
+	return render_template("user_info.html")
+
+
+@app.route('/delete/')
+@user_login_req
+def user_delete():
+	return render_template("user_delete.html")
+
+
 @app.route('/logout')
 def logout():
 	session.pop('user_name', None)
 	return redirect(url_for('index'))
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+	resp = make_response(render_template("page_not_found.html"), 404)
+	return resp
 
 
 if __name__ == '__main__':
