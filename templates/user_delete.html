@@ -9,7 +9,18 @@
         <div class="col-md-9">
             <div class="jumbotron" style="padding: 5px 20px">
                 <h2>注销账号</h2>
-                <p>qqq</p>
+                <hr/>
+                {% for message in get_flashed_messages(category_filter=['error']) %}
+                    <h3 style="color: red">{{ message }}</h3>
+                {% endfor %}
+                {% for message in get_flashed_messages(category_filter=['ok']) %}
+                    <h3 style="color: green">{{ message }}</h3>
+                {% endfor %}
+                <form method="post">
+                    <div class="form-group">
+                        <input type="submit" name="submit" class="btn btn-success" value="确定注销">
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -19,7 +30,7 @@
     <script>
         $(document).ready(
             function () {
-                $("#nav-2").addClass("active")
+                $("#item-4").addClass("list-group-item-success")
             }
         );
     </script>

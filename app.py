@@ -4,6 +4,7 @@ import sqlite3
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, g, flash, session, make_response
 from model import User
+from forms import RegistForm
 
 app = Flask(__name__)
 app.config["DATABASE"] = 'database.db'
@@ -75,8 +76,6 @@ def delete_user_by_name(user_name):
 
 
 def update_user_by_name(user_name, attrs):
-	if 'name' in attrs:
-		raise Exception(u'不能修改用户名')
 	setter = ''
 	cnt = len(attrs.keys())
 	i = 0
@@ -137,6 +136,7 @@ def user_login():
 
 @app.route('/regist/', methods=['GET', 'POST'])
 def user_regist():
+	regForm = RegistForm()
 	if request.method == 'POST':
 		user = User()
 		user.name = request.form['user_name']
@@ -152,7 +152,7 @@ def user_regist():
 		insert_user_to_db(user)
 		flash(u"注册成功", category='ok')
 		return redirect(url_for("user_login", username=user.name))
-	return render_template('user_regist.html')
+	return render_template('user_regist.html', form=regForm)
 
 
 @app.route('/center/')
@@ -164,24 +164,60 @@ def user_center():
 @app.route('/detail/')
 @user_login_req
 def user_detail():
-	return render_template("user_detail.html")
+	user = query_user_by_name(session.get('user_name', ''))
+	return render_template("user_detail.html", user=user)
 
 
-@app.route('/pwd/')
+@app.route('/pwd/', methods=['GET', 'POST'])
 @user_login_req
 def user_pwd():
+	if request.method == 'POST':
+		old_pwd = request.form['old_pwd']
+		new_pwd = request.form['new_pwd']
+		user = query_user_by_name(session.get("user_name"))
+		if str(user.pwd) == str(old_pwd):
+			user.pwd = str(new_pwd)
+			update_user_by_name(user.name, {"pwd": user.pwd})
+			session.pop("user_name", None)
+			flash(message=u"密码修改成功", category="ok")
+			return redirect(url_for('user_login', username=user.name))
+		else:
+			flash(message=u"密码输入错误", category="error")
+			return render_template("user_pwd.html")
 	return render_template("user_pwd.html")
 
 
-@app.route('/info/')
+@app.route('/info/', methods=['GET', 'POST'])
 @user_login_req
 def user_info():
-	return render_template("user_info.html")
+	user_old = query_user_by_name(session.get('user_name'))
+	if request.method == 'POST':
+		user = User()
+		user.name = request.form.get('user_name') if request.form['user_name'] else user_old.name
+		user.email = request.form.get('user_email') if request.form['user_email'] else user_old.email
+		user.age = request.form.get('user_age') if request.form['user_age'] else user_old.age
+		user.birthday = request.form.get('user_birthday') if request.form['user_birthday'] else user_old.birthday
+		user.face = request.form.get('user_face') if request.form['user_face'] else user_old.face
+		update_user_by_name(user_old.name,
+							{
+								"name": user.name,
+								"email": user.email,
+								"age": user.age,
+								"birthday": user.birthday,
+								"face": user.face
+							}
+							)
+		session['user_name'] = user.name
+		return redirect(url_for("user_detail"))
+	return render_template("user_info.html", user=user_old)
 
 
-@app.route('/delete/')
+@app.route('/delete/', methods=['GET', 'POST'])
 @user_login_req
 def user_delete():
+	if request.method == 'POST':
+		delete_user_by_name(session.get('user_name'))
+		return redirect(url_for('logout'))
 	return render_template("user_delete.html")
 
 
