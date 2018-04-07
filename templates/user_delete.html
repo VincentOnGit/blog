@@ -17,6 +17,7 @@
                     <h3 style="color: green">{{ message }}</h3>
                 {% endfor %}
                 <form method="post">
+                    {{ form.csrf_token }}
                     <div class="form-group">
                         <input type="submit" name="submit" class="btn btn-success" value="确定注销">
                     </div>

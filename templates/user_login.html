@@ -8,17 +8,23 @@
         <h3 style="color: green">{{ message }}</h3>
     {% endfor %}
     <form method="post" class="col-md-6 col-md-offset-2">
+        {{ form.csrf_token }}
         <div class="form-group">
-            <label for="user_name">用户名</label>
-            <input id="user_name" name="user_name" class="form-control" type="text"
-                   value="{{ request.args.get('username', '') }}" placeholder="请输入用户名">
+            {{ form.user_name.label }}
+            {{ form.user_name(value=request.args.get('username', '')) }}
+             {% for err in form.user_name.errors %}
+                <p style="color: red">{{ err }}</p>
+            {% endfor %}
         </div>
         <div class="form-group">
-            <label for="user_pwd">密码</label>
-            <input id="user_pwd" name="user_pwd" class="form-control" type="password">
+            {{ form.user_pwd.label }}
+            {{ form.user_pwd }}
+             {% for err in form.user_pwd.errors %}
+                <p style="color: red">{{ err }}</p>
+            {% endfor %}
         </div>
         <div class="form-group">
-            <input type="submit" name="submit" class="btn btn-success" value="登录">
+            {{ form.submit }}
         </div>
     </form>
 {% endblock %}

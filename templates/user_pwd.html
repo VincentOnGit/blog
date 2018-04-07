@@ -17,16 +17,23 @@
                     <h3 style="color: green">{{ message }}</h3>
                 {% endfor %}
                 <form method="post">
+                    {{ form.csrf_token }}
                     <div class="form-group">
-                        <label for="old_pwd">旧密码</label>
-                        <input id="old_pwd" name="old_pwd" class="form-control" type="password">
+                        {{ form.old_pwd.label }}
+                        {{ form.old_pwd }}
+                        {% for err in form.old_pwd.errors %}
+                            <p style="color: red">{{ err }}</p>
+                        {% endfor %}
                     </div>
                     <div class="form-group">
-                        <label for="new_pwd">新密码</label>
-                        <input id="new_pwd" name="new_pwd" class="form-control" type="password">
+                        {{ form.new_pwd.label }}
+                        {{ form.new_pwd }}
+                        {% for err in form.new_pwd.errors %}
+                            <p style="color: red">{{ err }}</p>
+                        {% endfor %}
                     </div>
                     <div class="form-group">
-                        <input type="submit" name="submit" class="btn btn-success" value="修改">
+                        {{ form.submit }}
                     </div>
                 </form>
             </div>

@@ -4,11 +4,14 @@ import sqlite3
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, g, flash, session, make_response
 from model import User
-from forms import RegistForm
+from forms import RegistForm, LoginForm, ChangePWDForm, ChangeInfoForm, DeleteForm
+from flask_wtf import CSRFProtect
 
 app = Flask(__name__)
 app.config["DATABASE"] = 'database.db'
 app.config["SECRET_KEY"] = '\xa2\xda\x01\xdb\xa7\x03\xeb\x9c-\xaec\xca\xea\xd1\xa7\x14\xe1\xd34\xd9\xa8\xcf\x99'
+
+csrf = CSRFProtect(app)
 
 
 def connect_db():
@@ -117,39 +120,42 @@ def index():
 
 @app.route('/login/', methods=['GET', 'POST'])
 def user_login():
-	if request.method == 'POST':
+	loginForm = LoginForm()
+	if loginForm.validate_on_submit():
 		username = request.form['user_name']
 		pwd = request.form['user_pwd']
 		user_x = query_user_by_name(username)
 		if not user_x:
 			flash(u"用户不存在，登录失败", category='error')
-			return render_template('user_login.html')
+			return render_template('user_login.html', form=loginForm)
 		else:
 			if str(pwd) != str(user_x.pwd):
 				flash(u"密码错误！", category="error")
-				return render_template('user_login.html')
+				return render_template('user_login.html', form=loginForm)
 			else:
 				session["user_name"] = user_x.name
 				return redirect(url_for("index"))
-	return render_template('user_login.html')
+	return render_template('user_login.html', form=loginForm)
 
 
 @app.route('/regist/', methods=['GET', 'POST'])
 def user_regist():
 	regForm = RegistForm()
-	if request.method == 'POST':
+	if regForm.validate_on_submit():
 		user = User()
 		user.name = request.form['user_name']
 		user.pwd = request.form['user_pwd']
 		user.email = request.form['user_email']
 		user.age = request.form['user_age']
 		user.birthday = request.form['user_birthday']
-		user.face = request.form['user_face']
+		f = request.files['user_face']
+		user.face = f.filename
 		user_x = query_user_by_name(user.name)
 		if user_x:
 			flash(u"用户名已经存在！", category='error')
-			return render_template('user_regist.html')
+			return render_template('user_regist.html', form=regForm)
 		insert_user_to_db(user)
+		f.save(f.filename)
 		flash(u"注册成功", category='ok')
 		return redirect(url_for("user_login", username=user.name))
 	return render_template('user_regist.html', form=regForm)
@@ -171,7 +177,8 @@ def user_detail():
 @app.route('/pwd/', methods=['GET', 'POST'])
 @user_login_req
 def user_pwd():
-	if request.method == 'POST':
+	changeForm = ChangePWDForm()
+	if changeForm.validate_on_submit():
 		old_pwd = request.form['old_pwd']
 		new_pwd = request.form['new_pwd']
 		user = query_user_by_name(session.get("user_name"))
@@ -183,15 +190,16 @@ def user_pwd():
 			return redirect(url_for('user_login', username=user.name))
 		else:
 			flash(message=u"密码输入错误", category="error")
-			return render_template("user_pwd.html")
-	return render_template("user_pwd.html")
+			return render_template("user_pwd.html", form=changeForm)
+	return render_template("user_pwd.html", form=changeForm)
 
 
 @app.route('/info/', methods=['GET', 'POST'])
 @user_login_req
 def user_info():
+	infoForm = ChangeInfoForm()
 	user_old = query_user_by_name(session.get('user_name'))
-	if request.method == 'POST':
+	if infoForm.validate_on_submit():
 		user = User()
 		user.name = request.form.get('user_name') if request.form['user_name'] else user_old.name
 		user.email = request.form.get('user_email') if request.form['user_email'] else user_old.email
@@ -209,16 +217,17 @@ def user_info():
 							)
 		session['user_name'] = user.name
 		return redirect(url_for("user_detail"))
-	return render_template("user_info.html", user=user_old)
+	return render_template("user_info.html", user=user_old, form=infoForm)
 
 
 @app.route('/delete/', methods=['GET', 'POST'])
 @user_login_req
 def user_delete():
-	if request.method == 'POST':
+	delForm = DeleteForm()
+	if delForm.validate_on_submit():
 		delete_user_by_name(session.get('user_name'))
 		return redirect(url_for('logout'))
-	return render_template("user_delete.html")
+	return render_template("user_delete.html", form=delForm)
 
 
 @app.route('/logout')
