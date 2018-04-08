@@ -1,105 +1,13 @@
 # -*- coding: utf-8 -*-
 
-import sqlite3
 from functools import wraps
-from flask import Flask, render_template, request, redirect, url_for, g, flash, session, make_response
+from flask import render_template, request, redirect, url_for, flash, session, make_response
+
+from blogdb import query_user_by_name, insert_user_to_db, update_user_by_name, delete_user_by_name
 from model import User
 from forms import RegistForm, LoginForm, ChangePWDForm, ChangeInfoForm, DeleteForm
-from flask_wtf import CSRFProtect
 
-app = Flask(__name__)
-app.config["DATABASE"] = 'database.db'
-app.config["SECRET_KEY"] = '\xa2\xda\x01\xdb\xa7\x03\xeb\x9c-\xaec\xca\xea\xd1\xa7\x14\xe1\xd34\xd9\xa8\xcf\x99'
-
-csrf = CSRFProtect(app)
-
-
-def connect_db():
-	"""Connects to the specific database."""
-	db = sqlite3.connect(app.config['DATABASE'])
-	return db
-
-
-@app.before_request
-def before_request():
-	g.db = connect_db()
-
-
-@app.teardown_request
-def teardown_request(exception):
-	if hasattr(g, 'db'):
-		g.db.close()
-
-
-def init_db():
-	with app.app_context():
-		db = connect_db()
-		with app.open_resource('schema.sql', mode='r') as f:
-			db.cursor().executescript(f.read())
-		db.commit()
-
-
-def insert_user_to_db(user):
-	attrsRepr, placeHolders = user.getAttrsRepr()
-	sql_insert = "INSERT INTO users " + attrsRepr + " VALUES " + placeHolders
-	args = user.toList()
-	g.db.execute(sql_insert, args)
-	g.db.commit()
-
-
-def query_users_from_db():
-	users = []
-	sql_query = "SELECT * FROM users ORDER BY id ASC"
-	args = []
-	cur = g.db.execute(sql_query, args)
-	for item in cur.fetchall():
-		user = User()
-		user.fromList(item[1:])
-		users.append(user)
-	return users
-
-
-def query_user_by_name(user_name):
-	sql_select = "select * from users where name=?"
-	args = [user_name]
-	cur = g.db.execute(sql_select, args)
-	item = cur.fetchone()
-	if item:
-		user = User()
-		user.fromList(item[1:])
-		return user
-	return None
-
-
-def delete_user_by_name(user_name):
-	sql_delete = "delete from users where name=?"
-	args = [user_name]
-	g.db.execute(sql_delete, args)
-	g.db.commit()
-
-
-def update_user_by_name(user_name, attrs):
-	setter = ''
-	cnt = len(attrs.keys())
-	i = 0
-	for key, value in attrs.iteritems():
-		setter += (key + '=?')
-		if i < cnt - 1:
-			setter += ', '
-		i += 1
-	sql_update = "update users set " + setter + " where name=?"
-	args = []
-	for key, value in attrs.iteritems():
-		args.append(value)
-	args.append(user_name)
-	g.db.execute(sql_update, args)
-	g.db.commit()
-
-
-def show_all_rows():
-	users = query_users_from_db()
-	for user in users:
-		print user.toList()
+from apps import app
 
 
 def user_login_req(func):
@@ -240,7 +148,3 @@ def logout():
 def page_not_found(error):
 	resp = make_response(render_template("page_not_found.html"), 404)
 	return resp
-
-
-if __name__ == '__main__':
-	app.run(debug=True)
