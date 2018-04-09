@@ -43,11 +43,11 @@ class RegistForm(FlaskForm):
 		validators=[
 			DataRequired(message=u"生日不能为空")
 		],
-		render_kw={"class": "form-control", "placeholder": u"请输入生日"}
+		render_kw={"class": "form-control", "placeholder": u"请输入生日", 'type': 'date'}
 	)
 	user_face = FileField(
 		label=u"头像",
-		validators=[],
+		validators=[DataRequired(message=u"头像不能为空")],
 		render_kw={"class": "form-control"}
 	)
 	submit = SubmitField(

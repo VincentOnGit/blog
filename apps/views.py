@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import os
 from functools import wraps
 from flask import render_template, request, redirect, url_for, flash, session, make_response
 
 from blogdb import query_user_by_name, insert_user_to_db, update_user_by_name, delete_user_by_name
 from model import User
 from forms import RegistForm, LoginForm, ChangePWDForm, ChangeInfoForm, DeleteForm
+from utils import change_filename_to_uuid, check_files_ext, ALLOWED_IMAGE_EXT
 
-from apps import app
+from apps import app, UPLOAD_FOLDER
 
 
 def user_login_req(func):
@@ -50,6 +52,9 @@ def user_login():
 def user_regist():
 	regForm = RegistForm()
 	if regForm.validate_on_submit():
+		if not check_files_ext([regForm.user_face.data.filename], ALLOWED_IMAGE_EXT):
+			flash(message=u'上传的图片格式不支持！', category='error')
+			return render_template('user_regist.html', form=regForm)
 		user = User()
 		user.name = request.form['user_name']
 		user.pwd = request.form['user_pwd']
@@ -57,13 +62,16 @@ def user_regist():
 		user.age = request.form['user_age']
 		user.birthday = request.form['user_birthday']
 		f = request.files['user_face']
-		user.face = f.filename
+		user.face = change_filename_to_uuid(f.filename)
 		user_x = query_user_by_name(user.name)
 		if user_x:
 			flash(u"用户名已经存在！", category='error')
 			return render_template('user_regist.html', form=regForm)
 		insert_user_to_db(user)
-		f.save(f.filename)
+		userfolder = os.path.join(app.config["UPLOAD_FOLDER"], user.name)
+		if not os.path.exists(userfolder):
+			os.mkdir(userfolder, os.O_RDWR)
+		f.save(os.path.join(userfolder, user.face))
 		flash(u"注册成功", category='ok')
 		return redirect(url_for("user_login", username=user.name))
 	return render_template('user_regist.html', form=regForm)
@@ -79,7 +87,7 @@ def user_center():
 @user_login_req
 def user_detail():
 	user = query_user_by_name(session.get('user_name', ''))
-	return render_template("user_detail.html", user=user)
+	return render_template("user_detail.html", user=user, uploadfolder=UPLOAD_FOLDER)
 
 
 @app.route('/pwd/', methods=['GET', 'POST'])
